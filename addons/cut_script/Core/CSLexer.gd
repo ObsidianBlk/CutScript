@@ -1,3 +1,4 @@
+tool
 extends Resource
 class_name CSLexer
 
@@ -10,7 +11,7 @@ class_name CSLexer
 # -----------------------------------------------------------------------------
 # Constants
 # -----------------------------------------------------------------------------
-const SINGLE_SYMBOLS = {
+const SINGLE_SYMBOLS : Dictionary = {
 	"#":TokenSet.TOKEN.HASH,
 	"(":TokenSet.TOKEN.PAREN_L,
 	")":TokenSet.TOKEN.PAREN_R,
@@ -26,7 +27,7 @@ const SINGLE_SYMBOLS = {
 	"*":TokenSet.TOKEN.MULT,
 }
 
-const OPERATOR_SYMBOLS = {
+const OPERATOR_SYMBOLS : Dictionary = {
 	"=":TokenSet.TOKEN.ASSIGN,
 	"==":TokenSet.TOKEN.EQ,
 	"<":TokenSet.TOKEN.LT,

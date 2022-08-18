@@ -65,6 +65,13 @@ var _mem : int = -1
 # -----------------------------------------------------------------------------
 # Public Methods
 # -----------------------------------------------------------------------------
+func clone():
+	var tsc = get_script().new()
+	for token in _tokens:
+		tsc.add(token.type, token.symbol, token.line, token.column)
+	return tsc
+
+
 func add(type : int, symbol : String, line : int = -1, column : int = -1) -> void:
 	_tokens.append({
 		"type": type,
@@ -202,6 +209,14 @@ func get_symbol() -> String:
 	if _idx >= 0 and _idx < _tokens.size():
 		return _tokens[_idx].symbol
 	return ""
+
+func get_symbol_as_number(force_real : bool = false):
+	if _idx >= 0 and _idx < _tokens.size():
+		if _tokens[_idx].symbol.is_valid_int():
+			return _tokens[_idx].symbol.to_int()
+		elif _tokens[_idx].symbol.is_valid_float():
+			return _tokens[_idx].symbol.to_float()
+	return INF
 
 func get_type() -> int:
 	if _idx >= 0 and _idx < _tokens.size():

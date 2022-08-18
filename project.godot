@@ -9,24 +9,43 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Object",
+"class": "ASTNode",
+"language": "GDScript",
+"path": "res://addons/cut_script/Core/ASTNode.gd"
+}, {
+"base": "Reference",
+"class": "CSInterpreter",
+"language": "GDScript",
+"path": "res://addons/cut_script/Core/CSInterpreter.gd"
+}, {
 "base": "Resource",
 "class": "CSLexer",
 "language": "GDScript",
-"path": "res://Scripts/CSCore/CSLexer.gd"
+"path": "res://addons/cut_script/Core/CSLexer.gd"
+}, {
+"base": "Resource",
+"class": "CutScriptResource",
+"language": "GDScript",
+"path": "res://addons/cut_script/CutScriptResource.gd"
 }, {
 "base": "Reference",
 "class": "TokenSet",
 "language": "GDScript",
-"path": "res://Scripts/CSCore/TokenSet.gd"
+"path": "res://addons/cut_script/Core/TokenSet.gd"
 } ]
 _global_script_class_icons={
+"ASTNode": "",
+"CSInterpreter": "",
 "CSLexer": "",
+"CutScriptResource": "",
 "TokenSet": ""
 }
 
 [application]
 
 config/name="CutScript"
+run/main_scene="res://Main.tscn"
 config/icon="res://icon.png"
 
 [physics]
