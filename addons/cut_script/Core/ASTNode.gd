@@ -51,6 +51,12 @@ func is_valid() -> bool:
 func get_type() -> int:
 	return _type
 
+func get_type_name() -> String:
+	for key in TYPE.keys():
+		if TYPE[key] == _type:
+			return key
+	return "UNDEFINED"
+
 func is_type(type : int) -> bool:
 	if _type >= 0:
 		return type == _type

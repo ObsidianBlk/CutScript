@@ -1,24 +1,16 @@
 extends Reference
 class_name CSInterpreter
 
+
 # ------------------------------------------------------------------------------
 # Signals
 # ------------------------------------------------------------------------------
-signal parser_failed(err, msg, line, col)
 signal interpreter_failed(err, msg, line, col)
+signal parser_failed(err, msg, line, col)
 
 # ------------------------------------------------------------------------------
 # Constants
 # ------------------------------------------------------------------------------
-const SUPPORTED_TYPES : Array = [
-	TYPE_INT,
-	TYPE_REAL,
-	TYPE_BOOL,
-	TYPE_VECTOR2,
-	TYPE_VECTOR3,
-	TYPE_STRING,
-]
-
 const RESERVED : Dictionary = {
 	"true": true,
 	"false": false,
@@ -34,10 +26,26 @@ var _error : Dictionary = {"id":OK, "msg":"", "line":-1, "column":-1}
 
 
 # ------------------------------------------------------------------------------
-# Override Methods
+# Private Methods
 # ------------------------------------------------------------------------------
-func _init() -> void:
-	pass
+func _Err(id : int, msg : String, line : int = -1, column : int = -1) -> void:
+	  if _error.id == OK:
+		  _error.id = id
+		  _error.msg = msg
+		  _error.line = line
+		  _error.column = column
+
+func _StripQuotes(s : String) -> String:
+	  var l = s.substr(0, 1)
+	  var r = s.substr(s.length() - 1, 1)
+	  if l == r and (l == "\"" or l == "'"):
+		  return s.substr(1, s.length() - 2)
+	  return s
+
+func _Is_Instruction(ts : TokenSet) -> bool:
+	if ts.is_type(TokenSet.TOKEN.LABEL):
+		return _instructions.keys().find(ts.get_symbol()) >= 0
+	return false
 
 # ------------------------------------------------------------------------------
 # Interpreter Methods
@@ -50,9 +58,16 @@ func _Interpret_Atomic(ast : ASTNode):
 		ASTNode.TYPE.BINARY:
 			return _Interpret_Binary(ast)
 		ASTNode.TYPE.LABEL:
-			# TODO: Should this verify a return value and create an error itself
-			# or let the caller do that if a null is returned? Unsure.
-			return get_var_value(ast.get_meta("value"))
+			var var_name : String = ast.get_meta_value(("value"))
+			if not var_name.is_valid_identifier():
+				_Err(ERR_INVALID_DECLARATION, "Symbol expected to be valid variable declaration.", ast.get_line(), ast.get_column())
+				return null
+			if not var_defined(var_name):
+				_Err(ERR_DOES_NOT_EXIST, "Variable \"%s\" undefined."%[var_name], ast.get_line(), ast.get_column())
+				return null
+			return get_var_value(var_name)
+		_:
+			_Err(ERR_INVALID_DECLARATION, "Unexpected declaration [%s]."%[ast.get_type_name()], ast.get_line(), ast.get_column())
 	return null
 
 func _Interpret_Assignment(ast : ASTNode) -> int:
@@ -65,14 +80,24 @@ func _Interpret_Assignment(ast : ASTNode) -> int:
 	if not label_name.is_valid_identifier():
 		_Err(ERR_INVALID_DECLARATION, "Symbol invalid variable name.", ast.get_line(), ast.get_column())
 		return ERR_INVALID_DECLARATION
+	if label_name in RESERVED:
+		_Err(ERR_ALREADY_IN_USE, "Symbol \"%s\" is reserved keyword.", ast.get_line(), ast.get_column())
+		return ERR_ALREADY_IN_USE
 	
 	# TODO: Finish this section
 	var right : ASTNode = ast.get_right()
 	var r_value = _Interpret_Atomic(right)
 	if r_value == null:
-		return ERR_INVALID_DECLARATION
+		return _error.id
+	var res : int = define_var(label_name, r_value)
+	if res != OK:
+		match res:
+			ERR_LOCKED:
+				_Err(res, "Constant variable cannot be changed.", ast.get_line(), ast.get_column())
+			_:
+				_Err(res, "Failed to define variable.", ast.get_line(), ast.get_column())
 	
-	return OK
+	return res
 
 func _Interpret_Binary(ast : ASTNode):
 	var operator : String = ast.get_meta("operator")
@@ -102,7 +127,7 @@ func _Interpret_Binary(ast : ASTNode):
 			pass
 
 func _Interpret_Block(ast : ASTNode) -> int:
-	for i in range(ast.node_count):
+	for i in range(ast.node_count()):
 		var node : ASTNode = ast.get_node(i)
 		match node.get_type():
 			ASTNode.TYPE.ASSIGNMENT:
@@ -122,182 +147,6 @@ func _Interpret(ast : ASTNode) -> int:
 	if not ast.is_type(ASTNode.TYPE.BLOCK):
 		return ERR_PARSE_ERROR
 	return _Interpret_Block(ast)
-
-# ------------------------------------------------------------------------------
-# Parser Methods
-# ------------------------------------------------------------------------------
-func _Err(id : int, msg : String, line : int = -1, column : int = -1) -> void:
-      if _error.id == OK:
-          _error.id = id
-          _error.msg = msg
-          _error.line = line
-          _error.column = column
-
-func _StripQuotes(s : String) -> String:
-      var l = s.substr(0, 1)
-      var r = s.substr(s.length() - 1, 1)
-      if l == r and (l == "\"" or l == "'"):
-          return s.substr(1, s.length() - 2)
-      return s
-
-func _Is_Instruction(ts : TokenSet) -> bool:
-	if ts.is_type(TokenSet.TOKEN.LABEL):
-		return _instructions.keys().find(ts.get_symbol()) >= 0
-	return false
-
-func _Parse_Number(ts : TokenSet) -> ASTNode:
-	var ast : ASTNode = null
-	var val = ts.get_symbol_as_number()
-	if val != INF:
-		ast = ASTNode.new(ASTNode.TYPE.NUMBER, ts.get_line(), ts.get_column(), {"value":val})
-	else: _Err(ERR_PARSE_ERROR, "Invalid number token.", ts.get_line(), ts.get_column())
-	ts.next()
-	return ast
-
-func _Parse_String(ts : TokenSet) -> ASTNode:
-	var ast : ASTNode = ASTNode.new(ASTNode.TYPE.STRING, ts.get_line(), ts.get_column(), {"value":_StripQuotes(ts.get_symbol())})
-	ts.next()
-	return ast
-
-func _Parse_Label(ts : TokenSet) -> ASTNode:
-	var ast : ASTNode = ASTNode.new(ASTNode.TYPE.LABEL, ts.get_line(), ts.get_column(), {"value":ts.get_symbol()})
-	ts.next()
-	return ast
-
-func _Parse_Vector(ts : TokenSet) -> ASTNode:
-	var l : int = ts.get_line()
-	var c : int = ts.get_column()
-	var ast : ASTNode = _Parse_Delimited(
-		ts,
-		ASTNode.new(ASTNode.TYPE.VECTOR, l, c),
-		TokenSet.TOKEN.LT,
-		TokenSet.TOKEN.GT
-	)
-	if ast != null:
-		var count : int = ast.node_count()
-		if count >= 2 and count <= 3:
-			var vals : Array = []
-			var n : ASTNode = ast.get_node(0)
-			if not n.is_type(ASTNode.TYPE.NUMBER):
-				_Err(ERR_INVALID_DECLARATION, "Vector expected number value.", n.get_line(), n.get_column())
-				return null
-			vals.append(n.get_meta("value"))
-
-			n = ast.get_node(1)
-			if not n.is_type(ASTNode.TYPE.NUMBER):
-				_Err(ERR_INVALID_DECLARATION, "Vector expected number value.", n.get_line(), n.get_column())
-				return null
-			vals.append(n.get_meta("value"))
-			
-			var vec = Vector2(vals[0], vals[1])
-			if count == 3:
-				n = ast.get_node(2)
-				if not n.is_type(ASTNode.TYPE.NUMBER):
-					_Err(ERR_INVALID_DECLARATION, "Vector expected number value.", n.get_line(), n.get_column())
-					return null
-				vals.append(n.get_meta("value"))
-				vec = Vector3(vals[0], vals[1], vals[2])
-			
-			ast.clear_child_nodes()
-			ast.set_meta("value", vec)
-			
-		else:
-			_Err(ERR_INVALID_DECLARATION, "Invalid number of vector datum.", l, c)
-	return ast
-
-
-func _Parse_Atom(ts : TokenSet) -> ASTNode:
-	if ts.next_if_type(TokenSet.TOKEN.PAREN_L):
-		var e : ASTNode = _Parse_Expression(ts)
-		if not ts.next_if_type(TokenSet.TOKEN.PAREN_R):
-			return null
-		return e
-		# TODO: I feel there was supposed to be more. Verify
-	elif ts.is_type(TokenSet.TOKEN.LT):
-		return _Parse_Vector(ts)
-	elif _Is_Instruction(ts):
-		return _Parse_Instruction(ts)
-	
-	if ts.is_type(TokenSet.TOKEN.NUMBER):
-		return _Parse_Number(ts)
-	elif ts.is_type(TokenSet.TOKEN.STRING):
-		return _Parse_String(ts)
-	elif ts.is_type(TokenSet.TOKEN.LABEL):
-		return _Parse_Label(ts)
-	return null
-
-
-func _Parse_Delimited(ts : TokenSet, node : ASTNode, start_token_type : int, end_token_type : int, delimiter_token_type : int = -1, parse_func : String = "_Parse_Atom") -> ASTNode:
-      if not has_method(parse_func):
-          _Err(FAILED, "Parse Delimited given unknown parse function.", ts.get_line(), ts.get_column())
-          return null
-      var toEOL : bool = (start_token_type < 0 or end_token_type < 0)
-      if not toEOL:
-          if not ts.next_if_type(start_token_type):
-              _Err(ERR_INVALID_DECLARATION, "Unexpected token type: %s"%[ts.get_type_name()], ts.get_line(), ts.get_column())
-              return null
-          ts.next_if_eol(true)
-  
-      while (not ts.is_eof() and (not toEOL and not ts.is_type(end_token_type))) or (toEOL and not ts.is_eol()):
-          if node.node_count() > 1: # Not the first delimited expression
-              if delimiter_token_type >= 0 and not ts.next_if_type(delimiter_token_type):
-                  _Err(ERR_INVALID_DECLARATION, "Unexpected token type: %s"%[ts.get_type_name()], ts.get_line(), ts.get_column())
-                  return null
-              if not toEOL:
-                  ts.next_if_eol(true)
-          var e : ASTNode = call(parse_func, ts)
-          if e != null:
-              node.append_node(e)
-          else: return null
-          if not toEOL: ts.next_if_eol(true)
-  
-      if not toEOL:
-          if not ts.is_type(end_token_type):
-              _Err(ERR_INVALID_DECLARATION, "Unexpected token type: %s"%[ts.get_type_name()], ts.get_line(), ts.get_column())
-              return null
-      return node
-
-
-func _Parse_Instruction(ts) -> ASTNode:
-	var ast : ASTNode = ASTNode.new(ASTNode.TYPE.INST, ts.get_line(), ts.get_column(), {"inst": ts.get_symbol()})
-	ts.next()
-	return _Parse_Delimited(ts, ast, -1, -1, TokenSet.TOKEN.COMMA)
-
-
-func _Parse_MaybeBinary(ts : TokenSet, l_ast : ASTNode, presidence : int) -> ASTNode:
-      if l_ast != null and ts.is_binop():
-          var tok : Dictionary = ts.get_token()
-          var cpres : int = ts.binop_presidence()
-          var operator : String = tok.symbol
-          ts.next()
-          if cpres > presidence:
-              var r_ast : ASTNode = _Parse_MaybeBinary(ts, _Parse_Atom(ts), cpres)
-              if r_ast == null:
-                  return null
-              var ast : ASTNode = ASTNode.new(
-				ASTNode.TYPE.ASSIGNMENT if operator == "=" else ASTNode.TYPE.BINARY, 
-				tok.line, tok.column, {"operator":operator})
-              ast.set_left(l_ast)
-              ast.set_right(r_ast)
-              return _Parse_MaybeBinary(ts, ast, presidence)
-      return l_ast
-
-func _Parse_Expression(ts : TokenSet) -> ASTNode:
-      return _Parse_MaybeBinary(ts, _Parse_Atom(ts), 0)
-
-
-func _Parse_Block(ts : TokenSet, terminator : int = TokenSet.TOKEN.EOF) -> void:
-	var ast : ASTNode = null
-	while not (ts.is_type(terminator) or ts.is_eof()):
-		if ts.next_if_eol():
-			continue
-		ast = _Parse_Expression(ts)
-		if ast == null:
-			emit_signal("parser_failed", _error.id, _error.msg, _error.line, _error.column)
-			return
-		if _Interpret(ast) != OK:
-			break
-		ast = null
 
 # ------------------------------------------------------------------------------
 # Public Methods
@@ -322,21 +171,27 @@ func define_inst(inst_name : String, owner : Object, method : String, args : Arr
 	for arg in args:
 		if typeof(arg) != TYPE_INT:
 			return ERR_INVALID_PARAMETER
-		if SUPPORTED_TYPES.find(arg) < 0:
+		if CSParser.SUPPORTED_TYPES.find(arg) < 0:
 			return ERR_INVALID_DECLARATION
 		def.args.append(arg)
 	_instructions[inst_name] = def
 	return OK
 
-func define_var(var_name : String, value, overwritable : bool = true) -> int:
-	if SUPPORTED_TYPES.find(typeof(value)) < 0:
+func define_var(var_name : String, value, constant : bool = false) -> int:
+	if CSParser.SUPPORTED_TYPES.find(typeof(value)) < 0:
 		return ERR_INVALID_DATA
 	if not var_name.is_valid_identifier():
 		return ERR_INVALID_DECLARATION
-	if identifier_defined(var_name):
-		return ERR_ALREADY_EXISTS
-	_env[var_name] = {"value": value, "overwrite": overwritable}
+	if var_name in RESERVED:
+		return ERR_ALREADY_IN_USE
+	if var_name in _env:
+		if _env[var_name].constant:
+			return ERR_LOCKED
+	_env[var_name] = {"value": value, "constant": constant}
 	return OK
+
+func var_defined(var_name : String) -> bool:
+	return var_name in RESERVED or var_name in _env
 
 func get_var_value(var_name : String):
 	if var_name.is_valid_identifier():
@@ -349,7 +204,18 @@ func get_var_value(var_name : String):
 func execute(csr : CutScriptResource) -> void:
 	if csr == null:
 		return
-	var tokens = csr.get_tokens()
-	_Parse_Block(tokens)
+	var parser : CSParser = CSParser.new(_instructions.keys())
+	parser.connect("parser_failed", self, "_on_parser_failed")
+	var ast : ASTNode = parser.parse(csr)
+	if ast == null:
+		return
+	if not ast.is_type(ASTNode.TYPE.BLOCK):
+		printerr("Parsed CutScript does not start with a block node.")
+		return
+	_Interpret_Block(ast)
 
-
+# ------------------------------------------------------------------------------
+# Handler Methods
+# ------------------------------------------------------------------------------
+func _on_parser_failed(id : int, msg : String, line : int, column : int) -> void:
+	emit_signal("parser_failed", id, msg, line, column)
