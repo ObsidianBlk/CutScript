@@ -19,7 +19,7 @@ func get_recognized_extensions():
     return ["CUT", "cut"]
 
 func get_save_extension():
-    return "cut"
+    return "res"
 
 func get_resource_type():
     return "Resource"

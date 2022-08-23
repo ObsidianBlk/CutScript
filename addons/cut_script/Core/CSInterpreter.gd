@@ -19,19 +19,109 @@ const SUPPORTED_TYPES : Array = [
 	TYPE_STRING,
 ]
 
+const RESERVED : Dictionary = {
+	"true": true,
+	"false": false,
+	"pi": PI
+}
+
 # ------------------------------------------------------------------------------
 # Variables
 # ------------------------------------------------------------------------------
 var _instructions : Dictionary = {}
+var _env : Dictionary = {}
 var _error : Dictionary = {"id":OK, "msg":"", "line":-1, "column":-1}
 
 
 # ------------------------------------------------------------------------------
+# Override Methods
+# ------------------------------------------------------------------------------
+func _init() -> void:
+	pass
+
+# ------------------------------------------------------------------------------
 # Interpreter Methods
 # ------------------------------------------------------------------------------
-func _Interpret(ast : ASTNode) -> int:
-	# TODO: Interpret this shit!
+
+func _Interpret_Atomic(ast : ASTNode):
+	match ast.get_type():
+		ASTNode.TYPE.NUMBER, ASTNode.TYPE.STRING, ASTNode.TYPE.VECTOR:
+			return ast.get_meta("value")
+		ASTNode.TYPE.BINARY:
+			return _Interpret_Binary(ast)
+		ASTNode.TYPE.LABEL:
+			# TODO: Should this verify a return value and create an error itself
+			# or let the caller do that if a null is returned? Unsure.
+			return get_var_value(ast.get_meta("value"))
+	return null
+
+func _Interpret_Assignment(ast : ASTNode) -> int:
+	var left : ASTNode = ast.get_left()
+	if not left.is_type(ASTNode.TYPE.LABEL):
+		_Err(ERR_INVALID_DECLARATION, "Missing expected variable declaration", ast.get_line(), ast.get_column())
+		return ERR_INVALID_DECLARATION
+	
+	var label_name : String = left.get_meta("value")
+	if not label_name.is_valid_identifier():
+		_Err(ERR_INVALID_DECLARATION, "Symbol invalid variable name.", ast.get_line(), ast.get_column())
+		return ERR_INVALID_DECLARATION
+	
+	# TODO: Finish this section
+	var right : ASTNode = ast.get_right()
+	var r_value = _Interpret_Atomic(right)
+	if r_value == null:
+		return ERR_INVALID_DECLARATION
+	
 	return OK
+
+func _Interpret_Binary(ast : ASTNode):
+	var operator : String = ast.get_meta("operator")
+	var left : ASTNode = ast.get_left()
+	var right : ASTNode = ast.get_right()
+	
+	match operator:
+		"+":
+			pass
+		"-":
+			pass
+		"*":
+			pass
+		"/":
+			pass
+		"==":
+			pass
+		"!=":
+			pass
+		">":
+			pass
+		"<":
+			pass
+		">=":
+			pass
+		"<=":
+			pass
+
+func _Interpret_Block(ast : ASTNode) -> int:
+	for i in range(ast.node_count):
+		var node : ASTNode = ast.get_node(i)
+		match node.get_type():
+			ASTNode.TYPE.ASSIGNMENT:
+				pass
+			ASTNode.TYPE.BINARY:
+				pass
+			ASTNode.TYPE.INST:
+				pass
+			ASTNode.TYPE.DIRECTIVE:
+				pass
+			ASTNode.TYPE.BLOCK:
+				return _Interpret_Block(node)
+	return OK
+
+func _Interpret(ast : ASTNode) -> int:
+	#print(ast.to_string(true))
+	if not ast.is_type(ASTNode.TYPE.BLOCK):
+		return ERR_PARSE_ERROR
+	return _Interpret_Block(ast)
 
 # ------------------------------------------------------------------------------
 # Parser Methods
@@ -66,6 +156,11 @@ func _Parse_Number(ts : TokenSet) -> ASTNode:
 
 func _Parse_String(ts : TokenSet) -> ASTNode:
 	var ast : ASTNode = ASTNode.new(ASTNode.TYPE.STRING, ts.get_line(), ts.get_column(), {"value":_StripQuotes(ts.get_symbol())})
+	ts.next()
+	return ast
+
+func _Parse_Label(ts : TokenSet) -> ASTNode:
+	var ast : ASTNode = ASTNode.new(ASTNode.TYPE.LABEL, ts.get_line(), ts.get_column(), {"value":ts.get_symbol()})
 	ts.next()
 	return ast
 
@@ -127,6 +222,8 @@ func _Parse_Atom(ts : TokenSet) -> ASTNode:
 		return _Parse_Number(ts)
 	elif ts.is_type(TokenSet.TOKEN.STRING):
 		return _Parse_String(ts)
+	elif ts.is_type(TokenSet.TOKEN.LABEL):
+		return _Parse_Label(ts)
 	return null
 
 
@@ -177,7 +274,9 @@ func _Parse_MaybeBinary(ts : TokenSet, l_ast : ASTNode, presidence : int) -> AST
               var r_ast : ASTNode = _Parse_MaybeBinary(ts, _Parse_Atom(ts), cpres)
               if r_ast == null:
                   return null
-              var ast : ASTNode = ASTNode.new(ASTNode.TYPE.ASSIGNMENT, tok.line, tok.column, {"operator":operator})
+              var ast : ASTNode = ASTNode.new(
+				ASTNode.TYPE.ASSIGNMENT if operator == "=" else ASTNode.TYPE.BINARY, 
+				tok.line, tok.column, {"operator":operator})
               ast.set_left(l_ast)
               ast.set_right(r_ast)
               return _Parse_MaybeBinary(ts, ast, presidence)
@@ -194,7 +293,8 @@ func _Parse_Block(ts : TokenSet, terminator : int = TokenSet.TOKEN.EOF) -> void:
 			continue
 		ast = _Parse_Expression(ts)
 		if ast == null:
-			emit_signal("parser_failed", _error.err, _error.msg, _error.line, _error.column)
+			emit_signal("parser_failed", _error.id, _error.msg, _error.line, _error.column)
+			return
 		if _Interpret(ast) != OK:
 			break
 		ast = null
@@ -202,10 +302,14 @@ func _Parse_Block(ts : TokenSet, terminator : int = TokenSet.TOKEN.EOF) -> void:
 # ------------------------------------------------------------------------------
 # Public Methods
 # ------------------------------------------------------------------------------
+func identifier_defined(ident_name : String) -> bool:
+	return ident_name in RESERVED or ident_name in _env or ident_name in _instructions
+
+
 func define_inst(inst_name : String, owner : Object, method : String, args : Array = []) -> int:
 	if not inst_name.is_valid_identifier():
 		return ERR_INVALID_DECLARATION
-	if inst_name in _instructions:
+	if identifier_defined(inst_name):
 		return ERR_ALREADY_EXISTS
 	if not owner.has_method(method):
 		return ERR_METHOD_NOT_FOUND
@@ -223,6 +327,24 @@ func define_inst(inst_name : String, owner : Object, method : String, args : Arr
 		def.args.append(arg)
 	_instructions[inst_name] = def
 	return OK
+
+func define_var(var_name : String, value, overwritable : bool = true) -> int:
+	if SUPPORTED_TYPES.find(typeof(value)) < 0:
+		return ERR_INVALID_DATA
+	if not var_name.is_valid_identifier():
+		return ERR_INVALID_DECLARATION
+	if identifier_defined(var_name):
+		return ERR_ALREADY_EXISTS
+	_env[var_name] = {"value": value, "overwrite": overwritable}
+	return OK
+
+func get_var_value(var_name : String):
+	if var_name.is_valid_identifier():
+		if var_name in RESERVED:
+			return RESERVED[var_name]
+		if var_name in _env:
+			return _env[var_name].value
+	return null
 
 func execute(csr : CutScriptResource) -> void:
 	if csr == null:

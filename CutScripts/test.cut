@@ -1,0 +1,3 @@
+; This is a comment and should be ignored
+variable1 = 5
+variable2 = 6 + 2

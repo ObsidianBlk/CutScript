@@ -1,0 +1,13 @@
+[remap]
+
+importer="obs.cutscript.plugin"
+type="Resource"
+path="res://.import/test.cut-ab535053940b01311b6bad07a0a69c16.res"
+
+[deps]
+
+source_file="res://CutScripts/test.cut"
+dest_files=[ "res://.import/test.cut-ab535053940b01311b6bad07a0a69c16.res" ]
+
+[params]
+

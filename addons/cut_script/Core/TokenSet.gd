@@ -212,7 +212,7 @@ func get_symbol() -> String:
 
 func get_symbol_as_number(force_real : bool = false):
 	if _idx >= 0 and _idx < _tokens.size():
-		if _tokens[_idx].symbol.is_valid_int():
+		if _tokens[_idx].symbol.is_valid_integer():
 			return _tokens[_idx].symbol.to_int()
 		elif _tokens[_idx].symbol.is_valid_float():
 			return _tokens[_idx].symbol.to_float()

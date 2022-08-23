@@ -48,6 +48,9 @@ func _init(type : int, line : int = -1, column : int = -1, meta : Dictionary = {
 func is_valid() -> bool:
 	return _type >= 0
 
+func get_type() -> int:
+	return _type
+
 func is_type(type : int) -> bool:
 	if _type >= 0:
 		return type == _type
