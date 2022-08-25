@@ -48,6 +48,286 @@ func _Is_Instruction(ts : TokenSet) -> bool:
 	return false
 
 # ------------------------------------------------------------------------------
+# Binary Operation Methods
+# ------------------------------------------------------------------------------
+
+func _Bin_Add(l_value, r_value, line : int, column : int):
+	match typeof(l_value):
+		TYPE_INT:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value + r_value
+				TYPE_REAL:
+					return float(l_value) + r_value
+				TYPE_STRING:
+					if r_value.is_valid_integer():
+						return l_value + l_value.to_int()
+					elif r_value.is_valid_float():
+						return float(l_value) + r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators INT + STRING.", line, column)
+				TYPE_VECTOR2, TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators INT + VECTOR.", line, column)
+		TYPE_REAL:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value + float(r_value)
+				TYPE_REAL:
+					return l_value + r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						return l_value + r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators FLOAT + STRING.", line, column)
+				TYPE_VECTOR2, TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators INT + VECTOR.", line, column)
+		TYPE_STRING:
+			match typeof(r_value):
+				TYPE_INT, TYPE_REAL:
+					return l_value + String(r_value)
+				TYPE_STRING:
+					return l_value + r_value
+				TYPE_VECTOR2:
+					return l_value + ("(%s, %s)"%[r_value.x, r_value.y])
+				TYPE_VECTOR3:
+					return l_value + ("(%s, %s, %s)"%[r_value.x, r_value.y, r_value.z])
+		TYPE_VECTOR2:
+			match typeof(r_value):
+				TYPE_INT:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR2 + INT.", line, column)
+				TYPE_REAL:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR2 + FLOAT.", line, column)
+				TYPE_STRING:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR2 + STRING.", line, column)
+				TYPE_VECTOR2:
+					return l_value + r_value
+				TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR2 + VECTOR3.", line, column)
+		TYPE_VECTOR3:
+			match typeof(r_value):
+				TYPE_INT:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR3 + INT.", line, column)
+				TYPE_REAL:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR3 + FLOAT.", line, column)
+				TYPE_STRING:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR3 + STRING.", line, column)
+				TYPE_VECTOR2:
+					_Err(ERR_INVALID_PARAMETER, "Cannot add operators VECTOR3 + VECTOR.", line, column)
+				TYPE_VECTOR3:
+					return l_value + r_value
+		_:
+			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+	return null
+
+func _Bin_Subtract(l_value, r_value, line : int, column : int):
+	match typeof(l_value):
+		TYPE_INT:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value - r_value
+				TYPE_REAL:
+					return float(l_value) - r_value
+				TYPE_STRING:
+					if r_value.is_valid_integer():
+						return l_value - l_value.to_int()
+					elif r_value.is_valid_float():
+						return float(l_value) - r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators INT - STRING.", line, column)
+				TYPE_VECTOR2, TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators INT - VECTOR.", line, column)
+		TYPE_REAL:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value - float(r_value)
+				TYPE_REAL:
+					return l_value - r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						return l_value - r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators FLOAT - STRING.", line, column)
+				TYPE_VECTOR2, TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators INT - VECTOR.", line, column)
+		TYPE_VECTOR2:
+			match typeof(r_value):
+				TYPE_INT:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR2 - INT.", line, column)
+				TYPE_REAL:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR2 - FLOAT.", line, column)
+				TYPE_STRING:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR2 - STRING.", line, column)
+				TYPE_VECTOR2:
+					return l_value - r_value
+				TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR2 - VECTOR3.", line, column)
+		TYPE_VECTOR3:
+			match typeof(r_value):
+				TYPE_INT:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR3 - INT.", line, column)
+				TYPE_REAL:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR3 - FLOAT.", line, column)
+				TYPE_STRING:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR3 - STRING.", line, column)
+				TYPE_VECTOR2:
+					_Err(ERR_INVALID_PARAMETER, "Cannot subtract operators VECTOR3 - VECTOR.", line, column)
+				TYPE_VECTOR3:
+					return l_value + r_value
+		_:
+			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+	return null
+
+
+func _Bin_Multiply(l_value, r_value, line : int, column : int):
+	match typeof(l_value):
+		TYPE_INT:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value * r_value
+				TYPE_REAL:
+					return float(l_value) * r_value
+				TYPE_STRING:
+					if r_value.is_valid_integer():
+						return l_value * l_value.to_int()
+					elif r_value.is_valid_float():
+						return float(l_value) * r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot multiply operators INT * STRING.", line, column)
+				TYPE_VECTOR2, TYPE_VECTOR3:
+					return float(l_value) * r_value
+		TYPE_REAL:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value * float(r_value)
+				TYPE_REAL, TYPE_VECTOR2, TYPE_VECTOR3:
+					return l_value * r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						return l_value * r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot multiply operators FLOAT * STRING.", line, column)
+		TYPE_VECTOR2:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value * float(r_value)
+				TYPE_REAL, TYPE_VECTOR2:
+					return l_value * r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						return l_value * r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot multiply operators VECTOR2 * STRING.", line, column)
+				TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot multiply operators VECTOR2 * VECTOR3.", line, column)
+		TYPE_VECTOR3:
+			match typeof(r_value):
+				TYPE_INT:
+					return l_value * float(r_value)
+				TYPE_REAL, TYPE_VECTOR3:
+					return l_value + r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						return l_value * r_value.to_float()
+					_Err(ERR_INVALID_PARAMETER, "Cannot multiply operators VECTOR3 * STRING.", line, column)
+				TYPE_VECTOR2:
+					_Err(ERR_INVALID_PARAMETER, "Cannot multiply operators VECTOR3 * VECTOR2.", line, column)
+		_:
+			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+	return null
+
+func _Bin_Divide(l_value, r_value, line : int, column : int):
+	match typeof(l_value):
+		TYPE_INT:
+			match typeof(r_value):
+				TYPE_INT:
+					if r_value != 0:
+						return l_value / r_value
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_REAL:
+					if r_value != 0.0:
+						return float(l_value) / r_value
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_STRING:
+					if r_value.is_valid_integer():
+						var val : int = l_value.to_int()
+						if val != 0:
+							return l_value / l_value.to_int()
+						_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+					elif r_value.is_valid_float():
+						var val : float = r_value.to_float()
+						if val != 0.0:
+							return float(l_value) / r_value.to_float()
+						_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot divide operators INT / STRING.", line, column)
+				TYPE_VECTOR2:
+					_Err(ERR_INVALID_PARAMETER, "Cannot divide operators INT / VECTOR2.", line, column)
+				TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot divide operators INT / VECTOR3.", line, column)
+		TYPE_REAL:
+			match typeof(r_value):
+				TYPE_INT:
+					if r_value != 0.0:
+						return l_value / float(r_value)
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_REAL:
+					if r_value != 0.0:
+						return l_value * r_value
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						var val : float = r_value.to_float()
+						if val != 0.0:
+							return l_value * r_value.to_float()
+						_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot divide operators FLOAT / STRING.", line, column)
+				TYPE_VECTOR2:
+					_Err(ERR_INVALID_PARAMETER, "Cannot divide operators FLOAT / VECTOR2.", line, column)
+				TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot divide operators FLOAT / VECTOR3.", line, column)
+		TYPE_VECTOR2:
+			match typeof(r_value):
+				TYPE_INT:
+					if r_value != 0:
+						return l_value / float(r_value)
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_REAL, TYPE_VECTOR2:
+					if r_value != 0.0:
+						return l_value / r_value
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						var val : float = r_value.to_float()
+						if val != 0.0:
+							return l_value * r_value.to_float()
+						_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot divide operators VECTOR2 / STRING.", line, column)
+				TYPE_VECTOR3:
+					_Err(ERR_INVALID_PARAMETER, "Cannot divide operators VECTOR2 / VECTOR3.", line, column)
+		TYPE_VECTOR3:
+			match typeof(r_value):
+				TYPE_INT:
+					if r_value != 0:
+						return l_value * float(r_value)
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_REAL:
+					if r_value != 0.0:
+						return l_value + r_value
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						var val : float = r_value.to_float()
+						if val != 0.0:
+							return l_value * val
+						_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot divide operators VECTOR3 / STRING.", line, column)
+				TYPE_VECTOR2:
+					_Err(ERR_INVALID_PARAMETER, "Cannot divide operators VECTOR3 * VECTOR2.", line, column)
+				TYPE_VECTOR3:
+					if r_value.length() != 0.0:
+						return l_value / r_value
+					_Err(ERR_INVALID_PARAMETER, "Divide by zero!", line, column)
+		_:
+			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+	return null
+
+# ------------------------------------------------------------------------------
 # Interpreter Methods
 # ------------------------------------------------------------------------------
 
@@ -104,15 +384,22 @@ func _Interpret_Binary(ast : ASTNode):
 	var left : ASTNode = ast.get_left()
 	var right : ASTNode = ast.get_right()
 	
+	var l_value = _Interpret_Atomic(left)
+	if l_value == null:
+		return null
+	var r_value = _Interpret_Atomic(right)
+	if r_value == null:
+		return null
+	
 	match operator:
 		"+":
-			pass
+			return _Bin_Add(l_value, r_value, ast.get_line(), ast.get_column())
 		"-":
-			pass
+			return _Bin_Subtract(l_value, r_value, ast.get_line(), ast.get_column())
 		"*":
-			pass
+			return _Bin_Multiply(l_value, r_value, ast.get_line(), ast.get_column())
 		"/":
-			pass
+			return _Bin_Divide(l_value, r_value, ast.get_line(), ast.get_column())
 		"==":
 			pass
 		"!=":
