@@ -327,6 +327,152 @@ func _Bin_Divide(l_value, r_value, line : int, column : int):
 			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
 	return null
 
+func _Bin_GT(l_value, r_value, line : int, column : int, eq : bool = false):
+	match typeof(l_value):
+		TYPE_INT:
+			match typeof(r_value):
+				TYPE_INT:
+					if eq:
+						return l_value >= r_value
+					return l_value > r_value
+				TYPE_REAL:
+					if eq:
+						return float(l_value) >= r_value
+					return float(l_value) > r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						if eq:
+							return float(l_value) >= r_value.to_float()
+						return float(l_value) > r_value.to_float()
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot test equality on operators INT > STRING.", line, column)
+				_:
+					_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		TYPE_REAL:
+			match typeof(r_value):
+				TYPE_INT:
+					if eq:
+						return float(l_value) >= r_value
+					return float(l_value) > r_value
+				TYPE_REAL:
+					if eq:
+						return l_value >= r_value
+					return l_value > r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						if eq:
+							return l_value >= r_value.to_float()
+						return l_value > r_value.to_float()
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot test equality on operators FLOAT > STRING.", line, column)
+				_:
+					_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		TYPE_STRING:
+			if l_value.is_valid_float():
+				match typeof(r_value):
+					TYPE_INT:
+						if eq:
+							return l_value.to_float() >= float(r_value)
+						return l_value.to_float() > float(r_value)
+					TYPE_REAL:
+						if eq:
+							return l_value.to_float() >= r_value
+						return l_value.to_float() > r_value
+					_:
+						_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+			else:
+				_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+		TYPE_VECTOR2:
+			if typeof(r_value) == TYPE_VECTOR2:
+				if eq:
+					return l_value.length_squared() >= r_value.length_squared()
+				return l_value.length_squared() > r_value.length_squared()
+			else:
+				_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		TYPE_VECTOR3:
+			if typeof(r_value) == TYPE_VECTOR3:
+				if eq:
+					return l_value.length_squared() >= r_value.length_squared()
+				return l_value.length_squared() > r_value.length_squared()
+			else:
+				_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		_:
+			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+	return null
+
+func _Bin_LT(l_value, r_value, line : int, column : int, eq : bool = false):
+	match typeof(l_value):
+		TYPE_INT:
+			match typeof(r_value):
+				TYPE_INT:
+					if eq:
+						return l_value <= r_value
+					return l_value < r_value
+				TYPE_REAL:
+					if eq:
+						return float(l_value) <= r_value
+					return float(l_value) < r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						if eq:
+							return float(l_value) <= r_value.to_float()
+						return float(l_value) < r_value.to_float()
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot test equality on operators INT < STRING.", line, column)
+				_:
+					_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		TYPE_REAL:
+			match typeof(r_value):
+				TYPE_INT:
+					if eq:
+						return float(l_value) <= r_value
+					return float(l_value) < r_value
+				TYPE_REAL:
+					if eq:
+						return l_value <= r_value
+					return l_value < r_value
+				TYPE_STRING:
+					if r_value.is_valid_float():
+						if eq:
+							return l_value <= r_value.to_float()
+						return l_value < r_value.to_float()
+					else:
+						_Err(ERR_INVALID_PARAMETER, "Cannot test equality on operators FLOAT < STRING.", line, column)
+				_:
+					_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		TYPE_STRING:
+			if l_value.is_valid_float():
+				match typeof(r_value):
+					TYPE_INT:
+						if eq:
+							return l_value.to_float() <= float(r_value)
+						return l_value.to_float() < float(r_value)
+					TYPE_REAL:
+						if eq:
+							return l_value.to_float() <= r_value
+						return l_value.to_float() < r_value
+					_:
+						_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+			else:
+				_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+		TYPE_VECTOR2:
+			if typeof(r_value) == TYPE_VECTOR2:
+				if eq:
+					return l_value.length_squared() <= r_value.length_squared()
+				return l_value.length_squared() < r_value.length_squared()
+			else:
+				_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		TYPE_VECTOR3:
+			if typeof(r_value) == TYPE_VECTOR3:
+				if eq:
+					return l_value.length_squared() <= r_value.length_squared()
+				return l_value.length_squared() < r_value.length_squared()
+			else:
+				_Err(ERR_INVALID_PARAMETER, "Right-hand operand type unsupported.", line, column)
+		_:
+			_Err(ERR_INVALID_PARAMETER, "Left-hand operand type unsupported.", line, column)
+	return null
+
 # ------------------------------------------------------------------------------
 # Interpreter Methods
 # ------------------------------------------------------------------------------
@@ -334,7 +480,7 @@ func _Bin_Divide(l_value, r_value, line : int, column : int):
 func _Interpret_Atomic(ast : ASTNode):
 	match ast.get_type():
 		ASTNode.TYPE.NUMBER, ASTNode.TYPE.STRING, ASTNode.TYPE.VECTOR:
-			return ast.get_meta("value")
+			return ast.get_meta_value("value")
 		ASTNode.TYPE.BINARY:
 			return _Interpret_Binary(ast)
 		ASTNode.TYPE.LABEL:
@@ -356,7 +502,7 @@ func _Interpret_Assignment(ast : ASTNode) -> int:
 		_Err(ERR_INVALID_DECLARATION, "Missing expected variable declaration", ast.get_line(), ast.get_column())
 		return ERR_INVALID_DECLARATION
 	
-	var label_name : String = left.get_meta("value")
+	var label_name : String = left.get_meta_value("value")
 	if not label_name.is_valid_identifier():
 		_Err(ERR_INVALID_DECLARATION, "Symbol invalid variable name.", ast.get_line(), ast.get_column())
 		return ERR_INVALID_DECLARATION
@@ -380,7 +526,7 @@ func _Interpret_Assignment(ast : ASTNode) -> int:
 	return res
 
 func _Interpret_Binary(ast : ASTNode):
-	var operator : String = ast.get_meta("operator")
+	var operator : String = ast.get_meta_value("operator")
 	var left : ASTNode = ast.get_left()
 	var right : ASTNode = ast.get_right()
 	
@@ -401,30 +547,34 @@ func _Interpret_Binary(ast : ASTNode):
 		"/":
 			return _Bin_Divide(l_value, r_value, ast.get_line(), ast.get_column())
 		"==":
-			pass
+			return l_value == r_value
 		"!=":
-			pass
+			return l_value != r_value
 		">":
-			pass
+			return _Bin_GT(l_value, r_value, ast.get_line(), ast.get_column())
 		"<":
-			pass
+			return _Bin_LT(l_value, r_value, ast.get_line(), ast.get_column())
 		">=":
-			pass
+			return _Bin_GT(l_value, r_value, ast.get_line(), ast.get_column(), true)
 		"<=":
-			pass
+			return _Bin_LT(l_value, r_value, ast.get_line(), ast.get_column(), true)
 
 func _Interpret_Block(ast : ASTNode) -> int:
 	for i in range(ast.node_count()):
 		var node : ASTNode = ast.get_node(i)
 		match node.get_type():
 			ASTNode.TYPE.ASSIGNMENT:
-				pass
+				var res = _Interpret_Assignment(node)
+				if res != OK:
+					return res
 			ASTNode.TYPE.BINARY:
-				pass
+				var val = _Interpret_Binary(node) # Honestly, this doesn't do a damn thing... but there you go!
+				if val == null:
+					return FAILED
 			ASTNode.TYPE.INST:
 				pass
 			ASTNode.TYPE.DIRECTIVE:
-				pass
+				print("DIRECTIVES ARE NOT YET A THING. Nice try though.")
 			ASTNode.TYPE.BLOCK:
 				return _Interpret_Block(node)
 	return OK
@@ -499,7 +649,9 @@ func execute(csr : CutScriptResource) -> void:
 	if not ast.is_type(ASTNode.TYPE.BLOCK):
 		printerr("Parsed CutScript does not start with a block node.")
 		return
+	print(ast.to_string(true))
 	_Interpret_Block(ast)
+	print(_env)
 
 # ------------------------------------------------------------------------------
 # Handler Methods
