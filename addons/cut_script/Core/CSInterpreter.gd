@@ -643,13 +643,14 @@ func execute(csr : CutScriptResource) -> void:
 		return
 	var parser : CSParser = CSParser.new(_instructions.keys())
 	parser.connect("parser_failed", self, "_on_parser_failed")
+	print(csr.source)
 	var ast : ASTNode = parser.parse(csr)
 	if ast == null:
 		return
 	if not ast.is_type(ASTNode.TYPE.BLOCK):
 		printerr("Parsed CutScript does not start with a block node.")
 		return
-	print(ast.to_string(true))
+	#print(ast.to_string(true))
 	_Interpret_Block(ast)
 	print(_env)
 

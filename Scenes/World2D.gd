@@ -25,6 +25,7 @@ func _ready() -> void:
 	if cut_script != null:
 		_interpreter = CSInterpreter.new()
 		_interpreter.connect("parser_failed", self, "_on_parse_failed")
+		_interpreter.connect("interpreter_failed", self, "_on_interpreter_failed")
 		_interpreter.execute(cut_script)
 
 
@@ -33,3 +34,8 @@ func _ready() -> void:
 # ------------------------------------------------------------------------------
 func _on_parse_failed(err : int, msg : String, line : int, col : int) -> void:
 	print("Parse Error [", err, "]: ", msg, " | line=", line, ", column=", col)
+
+func _on_interpreter_failed(err : int, msg : String, line : int, col : int) -> void:
+	print("Interpreter Error [", err, "]: ", msg, " | line=", line, ", column=", col)
+
+
