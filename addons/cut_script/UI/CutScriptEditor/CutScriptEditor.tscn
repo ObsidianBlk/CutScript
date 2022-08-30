@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/cut_script/UI/CutScriptEditor/CutScriptEditor.gd" type="Script" id=1]
+
+[node name="CutScriptEditor" type="VBoxContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+
+[node name="HFlowContainer" type="HBoxContainer" parent="."]
+margin_right = 1024.0
+margin_bottom = 64.0
+rect_min_size = Vector2( 0, 64 )
+
+[node name="OpMiniMap" type="CheckButton" parent="HFlowContainer"]
+margin_right = 143.0
+margin_bottom = 64.0
+text = "Mini Map:"
+
+[node name="VSeparator" type="VSeparator" parent="HFlowContainer"]
+margin_left = 147.0
+margin_right = 151.0
+margin_bottom = 64.0
+
+[node name="Label" type="Label" parent="HFlowContainer"]
+margin_left = 155.0
+margin_top = 25.0
+margin_right = 372.0
+margin_bottom = 39.0
+text = "Something nifty will go here soon!"
+
+[node name="TextEdit" type="TextEdit" parent="."]
+margin_top = 68.0
+margin_right = 1024.0
+margin_bottom = 600.0
+rect_min_size = Vector2( 0, 384 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[connection signal="toggled" from="HFlowContainer/OpMiniMap" to="." method="_on_OpMiniMap_toggled"]
+[connection signal="text_changed" from="TextEdit" to="." method="_on_source_changed"]
