@@ -66,6 +66,10 @@ config/name="CutScript"
 run/main_scene="res://Main.tscn"
 config/icon="res://icon.png"
 
+[editor_plugins]
+
+enabled=PoolStringArray( "res://addons/cut_script/plugin.cfg" )
+
 [physics]
 
 common/enable_pause_aware_picking=true

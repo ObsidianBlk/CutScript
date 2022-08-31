@@ -3,7 +3,7 @@ variable1 = 5
 variable2 = 6 + 2
 variable3 = (5+2) == 7
 variable4 = 5 < 8
-variable5 = variable3 <= 9
+variable5 = variable2 <= 9
 
 
 

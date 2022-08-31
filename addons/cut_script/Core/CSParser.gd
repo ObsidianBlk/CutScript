@@ -139,6 +139,7 @@ func _Parse_Atom(ts : TokenSet) -> ASTNode:
 		return _Parse_String(ts)
 	elif ts.is_type(TokenSet.TOKEN.LABEL):
 		return _Parse_Label(ts)
+	print(ts.get_type_name())
 	return null
 
 
@@ -206,8 +207,10 @@ func _Parse_Block(ts : TokenSet, terminator : int = TokenSet.TOKEN.EOF) -> ASTNo
 	while not (ts.is_type(terminator) or ts.is_eof()):
 		if ts.next_if_eol():
 			continue
+		#if ts.get_line() == 5:
+		#	print("Yes, we got to line 5")
 		var e : ASTNode = _Parse_Expression(ts)
-		if ast == null:
+		if e == null:
 			return null
 		ast.append_node(e)
 		if not _skip_eol:

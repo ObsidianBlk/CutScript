@@ -125,9 +125,14 @@ func _Parse_Line(ts : TokenSet, idx : int, line : String) -> int:
 	# s = symbol | l = line | c = column | sm = "String Mode" | err = Error code, if any (OK by default)
 	var state : Dictionary = {"s":"", "l":idx, "c":0, "sm":false, "err":OK}
 	var line_len : int = line.length()
+	var skip_char : bool = false
 	for col in range(line_len):
+		if skip_char:
+			skip_char = false
+			continue
+		
 		var chr : String = line.substr(col,1)
-		var chr2 : String = "" if col+1 < line_len else line.substr(col+1,1)
+		var chr2 : String = "" if col+1 >= line_len else line.substr(col+1,1)
 		
 		if chr == "\"" or state.sm == true: # Are we about to or in the middle of handling a string...
 			var closing = state.sm # Determines if we START with "string mode" on or off
@@ -151,6 +156,8 @@ func _Parse_Line(ts : TokenSet, idx : int, line : String) -> int:
 				state = _Attempt_Store_Dual(ts, state, {"s":sym, "l":idx, "c":col, "sm":false, "err":OK})
 				if state.err != OK:
 					return state.err
+				if sym.length() == 2:
+					skip_char = true
 			elif chr != " ": # Otherwise, if the character isn't a space
 				if state.s == "": # Store the column index if this looks to be a new symbol
 					state.c = col

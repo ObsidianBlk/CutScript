@@ -5,6 +5,7 @@ class_name CSInterpreter
 # ------------------------------------------------------------------------------
 # Signals
 # ------------------------------------------------------------------------------
+signal interpreter_complete()
 signal interpreter_failed(err, msg, line, col)
 signal parser_failed(err, msg, line, col)
 
@@ -509,13 +510,35 @@ func _Interpret_Assignment(ast : ASTNode) -> int:
 	if label_name in RESERVED:
 		_Err(ERR_ALREADY_IN_USE, "Symbol \"%s\" is reserved keyword.", ast.get_line(), ast.get_column())
 		return ERR_ALREADY_IN_USE
+
 	
-	# TODO: Finish this section
+	var res : int = OK
 	var right : ASTNode = ast.get_right()
-	var r_value = _Interpret_Atomic(right)
+	var r_value = null
+	match right.get_type():
+		ASTNode.TYPE.BINARY:
+			r_value = _Interpret_Binary(right)
+		ASTNode.TYPE.ASSIGNMENT:
+			res = _Interpret_Assignment(right)
+			if res != OK:
+				return res
+			# If the above succeeded, then we definitely know the left most node in the <right> ASTNode
+			# if a valid label. So, we'll use that assumption to look it up...
+			var lnode : ASTNode = right.get_left()
+			if lnode != null:
+				var val = lnode.get_meta_value("value")
+				if typeof(val) == TYPE_STRING:
+					r_value = get_var_value(val)
+				else:
+					_Err(FAILED, "Assignment succeeded but left hand node value not String.", right.get_line(), right.get_column())
+			else:
+				_Err(FAILED, "Assignment succeeded but left hand node is null.", right.get_line(), right.get_column())
+		_:
+			r_value = _Interpret_Atomic(right)
 	if r_value == null:
 		return _error.id
-	var res : int = define_var(label_name, r_value)
+	
+	res = define_var(label_name, r_value)
 	if res != OK:
 		match res:
 			ERR_LOCKED:
@@ -643,7 +666,7 @@ func execute(csr : CutScriptResource) -> void:
 		return
 	var parser : CSParser = CSParser.new(_instructions.keys())
 	parser.connect("parser_failed", self, "_on_parser_failed")
-	print(csr.source)
+	#print(csr.get_tokens().to_string_array())
 	var ast : ASTNode = parser.parse(csr)
 	if ast == null:
 		return
@@ -651,8 +674,11 @@ func execute(csr : CutScriptResource) -> void:
 		printerr("Parsed CutScript does not start with a block node.")
 		return
 	#print(ast.to_string(true))
-	_Interpret_Block(ast)
-	print(_env)
+	var res : int = _Interpret_Block(ast)
+	if res == OK:
+		emit_signal("interpreter_complete")
+	else:
+		emit_signal("interpreter_failed", _error.id, _error.msg, _error.line, _error.column)
 
 # ------------------------------------------------------------------------------
 # Handler Methods
