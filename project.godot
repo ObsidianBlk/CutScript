@@ -32,12 +32,17 @@ _global_script_classes=[ {
 "base": "Resource",
 "class": "CutScriptResource",
 "language": "GDScript",
-"path": "res://addons/cut_script/CutScriptResource.gd"
+"path": "res://addons/cut_script/Resources/CutScriptResource.gd"
+}, {
+"base": "ResourceFormatLoader",
+"class": "CutScriptResourceLoader",
+"language": "GDScript",
+"path": "res://addons/cut_script/Resources/CutScriptResourceLoader.gd"
 }, {
 "base": "ResourceFormatSaver",
 "class": "CutScriptResourceSaver",
 "language": "GDScript",
-"path": "res://addons/cut_script/CutScriptResourceSaver.gd"
+"path": "res://addons/cut_script/Resources/CutScriptResourceSaver.gd"
 }, {
 "base": "Reference",
 "class": "TokenSet",
@@ -50,6 +55,7 @@ _global_script_class_icons={
 "CSLexer": "",
 "CSParser": "",
 "CutScriptResource": "",
+"CutScriptResourceLoader": "",
 "CutScriptResourceSaver": "",
 "TokenSet": ""
 }
@@ -59,10 +65,6 @@ _global_script_class_icons={
 config/name="CutScript"
 run/main_scene="res://Main.tscn"
 config/icon="res://icon.png"
-
-[editor_plugins]
-
-enabled=PoolStringArray( "res://addons/cut_script/plugin.cfg" )
 
 [physics]
 

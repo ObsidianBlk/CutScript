@@ -4,34 +4,34 @@ extends EditorImportPlugin
 # ------------------------------------------------------------------------------
 # Constant
 # ------------------------------------------------------------------------------
-var CUTSCRIPTRESOURCE = preload("res://addons/cut_script/CutScriptResource.gd")
+var CSRT = preload("res://addons/cut_script/Resources/CutScriptResource.gd")
 
 # ------------------------------------------------------------------------------
 # Override Methods
 # ------------------------------------------------------------------------------
 func get_importer_name():
-    return "obs.cutscript.plugin"
+	return "obs.cutscript.plugin"
 
 func get_visible_name():
-    return "Cut-Script"
+	return "Cut-Script"
 
 func get_recognized_extensions():
-    return ["CUT", "cut"]
+	return ["CUT", "cut"]
 
 func get_save_extension():
-    return "res"
+	return "res"
 
 func get_resource_type():
-    return "Resource"
+	return "Resource"
 
 func get_preset_count():
-    return 1
+	return 1
 
 func get_preset_name(preset):
-    return "Default"
+	return "Default"
 
 func get_import_options(preset):
-    return []
+	return []
 
 func import(source_file : String, save_path : String, options : Dictionary, r_platform_variants : Array, r_gen_files : Array) -> int:
 	var file : File = File.new()
@@ -42,6 +42,6 @@ func import(source_file : String, save_path : String, options : Dictionary, r_pl
 	var text : String = file.get_as_text(true)
 	file.close()
 	
-	var csr : Resource = CUTSCRIPTRESOURCE.new(text)
+	var csr : Resource = CSRT.new(text)
 	return ResourceSaver.save("%s.%s" % [save_path, get_save_extension()], csr)
 

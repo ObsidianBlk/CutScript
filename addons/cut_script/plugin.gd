@@ -19,7 +19,7 @@ var _cut_script_resource : Resource = null
 # Override Methods
 # ------------------------------------------------------------------------------
 func _enter_tree():
-	_cut_importer = preload("res://addons/cut_script/importer.gd").new()
+	_cut_importer = preload("res://addons/cut_script/Resources/CutScriptResourceImporter.gd").new()
 	add_import_plugin(_cut_importer)
 	_cut_editor = CUTSCRIPTEDITOR.instance()
 	_cut_editor_button = add_control_to_bottom_panel(_cut_editor, "CutScript Editor")
