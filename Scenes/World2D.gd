@@ -24,10 +24,21 @@ func set_cut_script(cs : Resource) -> void:
 func _ready() -> void:
 	if cut_script != null:
 		_interpreter = CSInterpreter.new()
+		_interpreter.define_instruction("PRINT", self, "_INST_Print", [CSInterpreter.ARG_TYPE_VARIANT])
+		_interpreter.define_instruction("TYPEOF", self, "_INST_TypeOf", [CSInterpreter.ARG_TYPE_VARIANT])
 		_interpreter.connect("parser_failed", self, "_on_parse_failed")
 		_interpreter.connect("interpreter_failed", self, "_on_interpreter_failed")
 		_interpreter.execute(cut_script)
 
+
+# ------------------------------------------------------------------------------
+# Interpreter Method
+# ------------------------------------------------------------------------------
+func _INST_Print(msg) -> void:
+	print(msg)
+
+func _INST_TypeOf(variable) -> int:
+	return typeof(variable)
 
 # ------------------------------------------------------------------------------
 # Handler Method

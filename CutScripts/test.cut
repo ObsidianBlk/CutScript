@@ -5,5 +5,12 @@ variable3 = (5+2) == 7
 variable4 = 5 < 8
 variable5 = variable2 <= 9
 
+TYPEOF variable3
+PRINT returned
+TYPEOF variable1
+PRINT returned
+
+
+
 
 
